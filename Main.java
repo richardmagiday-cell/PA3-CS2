@@ -13,11 +13,11 @@ public class Main {
         long connectivity;    // current sum of size^2 across all components
 
         DisjointSet(int n) {
-            parent = new int[n + 1]; // 1-indexed nodes
-            rank   = new int[n + 1];
-            size   = new int[n + 1];
+            parent = new int[n]; // 0-indexed nodes
+            rank   = new int[n];
+            size   = new int[n];
 
-            for (int i = 1; i <= n; i++) {
+            for (int i = 0; i < n; i++) {
                 parent[i] = i;
                 rank[i]   = 0;
                 size[i]   = 1;
@@ -32,8 +32,6 @@ public class Main {
             if (id == parent[id])
                 return id;
 
-            // TODO: recursively find root and apply path compression
-            // (set parent[id] = root so future finds are O(1))
             int root = find(parent[id]);
             parent[id] = root; // path compression
             return root;
@@ -47,31 +45,29 @@ public class Main {
             if (root1 == root2)
                 return; // already in same component — connectivity unchanged
 
-            // TODO: subtract the squared sizes of the two old components from connectivity,
-            //       merge by rank (attach smaller-rank tree under larger-rank root),
-            //       update the surviving root's size,
-            //       then add the squared size of the merged component to connectivity.
-
-            // Remove old contributions
+            // Remove the two old component contributions from connectivity
             connectivity -= (long) size[root1] * size[root1];
             connectivity -= (long) size[root2] * size[root2];
 
-            // Union by rank
+            // Attach smaller-rank tree under larger-rank root (union by rank)
             if (rank[root1] > rank[root2]) {
-                // TODO: attach root2 under root1, update size[root1]
+                parent[root2] = root1;
+                size[root1] += size[root2];
+                connectivity += (long) size[root1] * size[root1];
             } else if (rank[root2] > rank[root1]) {
-                // TODO: attach root1 under root2, update size[root2]
+                parent[root1] = root2;
+                size[root2] += size[root1];
+                connectivity += (long) size[root2] * size[root2];
             } else {
-                // TODO: equal rank — attach root2 under root1, increment rank[root1], update size
+                // Equal ranks: attach root2 under root1, increase root1's rank
+                parent[root2] = root1;
+                size[root1] += size[root2];
+                rank[root1]++;
+                connectivity += (long) size[root1] * size[root1];
             }
-
-            // TODO: add new merged component's squared size to connectivity
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Edge helper — stores the two endpoints of each connection (1-indexed)
-    // -------------------------------------------------------------------------
     static class Edge {
         int u, v;
         Edge(int u, int v) {
@@ -80,9 +76,6 @@ public class Main {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Main
-    // -------------------------------------------------------------------------
     public static void main(String[] args) {
         try (Scanner sc = new Scanner(System.in)) {
 
@@ -90,35 +83,27 @@ public class Main {
         int m = sc.nextInt(); // number of connections
         int d = sc.nextInt(); // number of connections to destroy
 
-        // Store all m edges (1-indexed: edge[1] .. edge[m])
-        Edge[] edges = new Edge[m + 1];
-        for (int i = 1; i <= m; i++) {
-            int u = sc.nextInt();
-            int v = sc.nextInt();
+        // Store all m edges (0-indexed: edges[0] .. edges[m-1])
+        Edge[] edges = new Edge[m];
+        for (int i = 0; i < m; i++) {
+            int u = sc.nextInt() - 1; // convert 1-based node to 0-based
+            int v = sc.nextInt() - 1;
             edges[i] = new Edge(u, v);
         }
 
         // Read the d destruction steps; mark which edges will be deleted
-        int[]     deleteList = new int[d];       // deleteList[i] = edge index destroyed at step i
-        boolean[] deleted    = new boolean[m + 1]; // deleted[i] = true if edge i is in deleteList
+        int[]     deleteList = new int[d];    // deleteList[i] = 0-based edge index destroyed at step i
+        boolean[] deleted    = new boolean[m]; // deleted[i] = true if edge i is in deleteList
 
         for (int i = 0; i < d; i++) {
-            deleteList[i]            = sc.nextInt();
-            deleted[deleteList[i]]   = true;
+            deleteList[i]          = sc.nextInt() - 1; // convert 1-based edge index to 0-based
+            deleted[deleteList[i]] = true;
         }
-
-        // -----------------------------------------------------------------
-        // Bottom-up strategy (see Hint 6):
-        //   1. Build DS using only the edges that survive ALL d deletions.
-        //   2. That gives us the connectivity AFTER the last deletion.
-        //   3. Then replay deletions in reverse (add edges back one by one)
-        //      to recover the connectivity at each earlier step.
-        // -----------------------------------------------------------------
 
         DisjointSet ds = new DisjointSet(n);
 
         // Union all edges that survive all d deletions to build the final state
-        for (int i = 1; i <= m; i++) {
+        for (int i = 0; i < m; i++) {
             if (!deleted[i]) {
                 ds.union(edges[i].u, edges[i].v);
             }
