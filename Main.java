@@ -111,7 +111,7 @@ public class Main {
         }
 
         // results[i] = connectivity of the network after the i-th deletion
-        // results[0] = connectivity before ANY deletion (initial state)
+        // results[0] = connectivity before ANY deletion
         long[] results = new long[d + 1];
 
         // State after all d deletions

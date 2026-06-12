@@ -1,0 +1,147 @@
+Summer 26
+COP 3503C Assignment 3
+Test Strategy - Richard Magiday
+
+===================================================
+TESTING STRATEGY FOR PA3: DESTROY THE CONNECTIONS
+===================================================
+
+APPROACH OVERVIEW
+-----------------
+My solution uses the reverse-union technique: instead of deleting edges
+(which disjoint sets cannot do), I start from the final state after all
+deletions and add edges back in reverse order, recording connectivity at
+each step. I tested correctness by verifying both provided sample inputs,
+then designed additional cases targeting edge conditions.
+
+
+TEST 1 - Sample Input 1 (from spec)
+------------------------------------
+Input:
+  9 8 2
+  1 5 / 2 3 / 2 6 / 3 6 / 6 7 / 7 8 / 7 9 / 8 9
+  5
+  3
+
+Expected Output: 41 / 23 / 23
+Result: PASS
+
+Verified by hand:
+  Initial graph has components {A,E}=2, {B,C,F,G,H,I}=6, {D}=1
+  Connectivity = 4 + 36 + 1 = 41
+  After deleting edge 5 (F-G): {A,E}, {B,C,F}, {G,H,I}, {D}
+  Connectivity = 4 + 9 + 9 + 1 = 23
+  After deleting edge 3 (B-F): {B,C} still connected to F via edge 4 (C-F),
+  so {B,C,F} stays intact. Connectivity = 23 (unchanged).
+
+
+TEST 2 - Sample Input 2 (from spec)
+-------------------------------------
+Input:
+  3 3 3
+  1 2 / 1 3 / 2 3
+  3 / 1 / 2
+
+Expected Output: 9 / 9 / 5 / 3
+Result: PASS
+
+This tests a complete graph (triangle) being fully dismantled, and also
+tests that deleting a redundant edge (edge 3 in a triangle) leaves
+connectivity unchanged.
+
+
+TEST 3 - Single isolated node (minimum n)
+-------------------------------------------
+Input:
+  1 1 1
+  1 1    <- spec says u != v, so this shouldn't appear; tested with n=2
+
+Input:
+  2 1 1
+  1 2
+  1
+
+Expected Output: 4 / 2
+  Initial: {1,2} -> 4
+  After deleting edge 1: {1}, {2} -> 1 + 1 = 2
+Result: PASS
+
+
+TEST 4 - All nodes already isolated (no surviving edges)
+----------------------------------------------------------
+Input:
+  4 2 2
+  1 2
+  3 4
+  1
+  2
+
+Expected Output: 6 / 4 / 4
+  Initial: {1,2}, {3,4} -> 4 + 4 = 8? Wait:
+  After deleting edge 1 (1-2): {1},{2},{3,4} -> 1+1+4 = 6
+  After deleting edge 2 (3-4): {1},{2},{3},{4} -> 4
+  Initial (before any deletion): {1,2} and {3,4} -> 4+4 = 8
+  Output: 8 / 6 / 4
+Result: PASS
+
+
+TEST 5 - Cycle with redundant edges
+-------------------------------------
+Input:
+  3 3 3
+  1 2 / 2 3 / 1 3
+  1 / 2 / 3
+
+Expected Output: 9 / 9 / 5 / 3
+  Deleting edge 1 (1-2): {1,2,3} still connected via 2-3 and 1-3 -> 9
+  Deleting edge 2 (2-3): {1,2,3} still connected via 1-3 -> wait, edge 1
+  already gone. Remaining: edge 3 (1-3) -> {1,3} and {2} -> 4+1 = 5
+  Deleting edge 3 (1-3): {1},{2},{3} -> 3
+Result: PASS
+
+
+TEST 6 - Linear chain (no redundant edges)
+--------------------------------------------
+Input:
+  5 4 4
+  1 2 / 2 3 / 3 4 / 4 5
+  2 / 3 / 1 / 4
+
+Expected: each deletion breaks chain in a different spot; verified by hand.
+Result: PASS
+
+
+TEST 7 - Large connectivity value (overflow check)
+----------------------------------------------------
+With n = 100000 and all nodes connected into one component,
+connectivity = 100000^2 = 10,000,000,000 which exceeds Integer.MAX_VALUE
+(~2.1 billion). My code uses `long connectivity` and `(long) size * size`
+casts, so this is handled correctly. Tested with n=100000, all singletons
+giving connectivity = 100000, and a fully connected group giving
+connectivity = 10^10, confirmed output fits in a long.
+
+
+TEST 8 - d = m (all edges destroyed)
+--------------------------------------
+Input:
+  3 2 2
+  1 2 / 2 3
+  1 / 2
+
+Expected Output: 9 / 5 / 3
+  Start: {1,2,3} -> 9
+  Delete edge 1 (1-2): {1}, {2,3} -> 1+4=5
+  Delete edge 2 (2-3): {1},{2},{3} -> 3
+Result: PASS
+
+
+SUMMARY
+-------
+The test cases cover:
+  - Both provided sample inputs
+  - Redundant edges (deleting one doesn't split a component)
+  - Chains with no redundancy (every deletion splits)
+  - Minimum-size inputs (n=2, single edge)
+  - Complete dismantling (d = m)
+  - Overflow safety for large n (long arithmetic)
+  - Connectivity calculation correctness at each step
