@@ -1,5 +1,4 @@
-/* Summer 26
-COP 3503C Assignment 3
+/* COP 3503C Assignment 3
 This program is written by: Richard Magiday */
 
 import java.util.Scanner;
@@ -97,7 +96,7 @@ public class Main {
         boolean[] deleted    = new boolean[m]; // true if edge i is in deleteList
 
         for (int i = 0; i < d; i++) {
-            deleteList[i]          = sc.nextInt() - 1; // convert 1-based edge index to 0-based
+            deleteList[i] = sc.nextInt() - 1; // convert 1-based edge index to 0-based
             deleted[deleteList[i]] = true;
         }
 
