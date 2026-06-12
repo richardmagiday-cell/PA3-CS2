@@ -1,4 +1,5 @@
-/* COP 3503C Assignment 3
+/* Summer 26
+COP 3503C Assignment 3
 This program is written by: Richard Magiday */
 
 import java.util.Scanner;
@@ -7,9 +8,9 @@ public class Main {
 
     static class DisjointSet {
 
-        private final int[] parent; // parent[i] = parent of node i (self = root)
-        private final int[] rank;   // rank[i] = upper bound on tree height at root i
-        private final int[] size;   // size[i]  = component size (only valid at root)
+        private final int[] parent;
+        private final int[] rank;
+        private final int[] size;
         long connectivity;    // current sum of size^2 across all components
 
         DisjointSet(int n) {
@@ -23,11 +24,11 @@ public class Main {
                 size[i]   = 1;
             }
 
-            // n singletons → each contributes 1^2 = 1
+            // n singletons, each contributes 1^2 = 1
             connectivity = (long) n;
         }
 
-        // Find with path compression (flattens tree toward root)
+        // Find with path compression
         int find(int id) {
             if (id == parent[id])
                 return id;
@@ -37,19 +38,19 @@ public class Main {
             return root;
         }
 
-        // Union by rank; updates connectivity if components merge
+        // Union by rank, updates connectivity if components merge
         void union(int u, int v) {
             int root1 = find(u);
             int root2 = find(v);
 
             if (root1 == root2)
-                return; // already in same component — connectivity unchanged
+                return; // already in same component, connectivity unchanged
 
             // Remove the two old component contributions from connectivity
             connectivity -= (long) size[root1] * size[root1];
             connectivity -= (long) size[root2] * size[root2];
 
-            // Attach smaller-rank tree under larger-rank root (union by rank)
+            // Attach smaller rank tree under larger-rank root
             if (rank[root1] > rank[root2]) {
                 parent[root2] = root1;
                 size[root1] += size[root2];
@@ -91,9 +92,9 @@ public class Main {
             edges[i] = new Edge(u, v);
         }
 
-        // Read the d destruction steps; mark which edges will be deleted
-        int[]     deleteList = new int[d];    // deleteList[i] = 0-based edge index destroyed at step i
-        boolean[] deleted    = new boolean[m]; // deleted[i] = true if edge i is in deleteList
+        // Read the d destruction steps, mark which edges will be deleted
+        int[] deleteList = new int[d];    // 0-based edge index destroyed at step i
+        boolean[] deleted    = new boolean[m]; // true if edge i is in deleteList
 
         for (int i = 0; i < d; i++) {
             deleteList[i]          = sc.nextInt() - 1; // convert 1-based edge index to 0-based
